@@ -48,6 +48,7 @@ Module Module1
         While True
             If castleW = True Then : Wcastle = "can" : Else : Wcastle = "can't" : End If
             If castleB = True Then : Bcastle = "can" : Else : Bcastle = "can't" : End If
+            Check()
             displayBoard()
             answer = Console.ReadLine()
             If answer = "FEN" Then
@@ -157,77 +158,26 @@ Module Module1
                     moveable = False
                 End If
             Case "R ", "r "
-                'Vertical Movement
-                If destHor = currHor And destVer <> currVer Then
-                    'Up
-                    If destVer > currVer Then
-                        For i = currVer + 1 To destVer - 1
-                            If board(i, currHor) IsNot ".." Then
-                                moveable = False
-                                Exit For
-                            Else
-                                moveable = True
-                            End If
-                        Next
-                        If destVer - currVer = 1 Then
-                            moveable = True
-                        End If
-                        'Down
-                    ElseIf destVer < currVer Then
-                        For i = currVer - 1 To destVer + 1
-                            If board(i, currHor) IsNot ".." Then
-                                moveable = False
-                                Exit For
-                            Else
-                                moveable = True
-                            End If
-                        Next
-                        If currVer - destVer = 1 Then
-                            moveable = True
+                moveable = True
+                Dim endValue As Integer
+                If destVer = currVer Then : endValue = Math.Abs(destHor - currHor) : Else : endValue = Math.Abs(destVer - currVer) : End If
+                For i = 1 To endValue - 1
+                    If destVer > currVer And destHor = currHor Then : If board(currVer + i, currHor) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If destVer < currVer And destHor = currHor Then : If board(currVer - i, currHor) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If destVer = currVer And destHor > currHor Then : If board(currVer, currHor + i) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If destVer = currVer And destHor < currHor Then : If board(currVer, currHor - i) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If currVer + i > 9 OrElse currHor + i > 9 OrElse currVer - i < 2 OrElse currHor - i < 2 Then : Exit For : End If
+                Next
+                'Castling
+                If moveable = True Then
+                    If colour = False Then
+                        If currVer = 2 And destVer = 2 Then
+                            If (destHor = 5 Or destHor = 7) And castleW = True Then : Castling = True : End If
                         End If
                     End If
-                    'Horizontal Movement
-                ElseIf destVer = currVer And destHor <> currHor Then
-                    'Right
-                    If destHor > currHor Then
-                        castleRightMaybe = True
-                        For i = currHor + 1 To destHor - 1
-                            If board(currVer, i) IsNot ".." Then
-                                moveable = False
-                                Exit For
-                            Else
-                                moveable = True
-                            End If
-                        Next
-                        If destHor - currHor = 1 Then
-                            moveable = True
-                        End If
-                        'Left
-                    ElseIf destHor < currHor Then
-                        castleLeftMaybe = True
-                        For i = currHor - 1 To destHor + 1
-                            If board(currVer, i) IsNot ".." Then
-                                moveable = False
-                                Exit For
-                            Else
-                                moveable = True
-                            End If
-                        Next
-                        If currHor - destHor = 1 Then
-                            moveable = True
-                        End If
-                    End If
-                    'Castling
-                    If moveable = True Then
-                        If colour = False Then
-                            If currVer = 2 And destVer = 2 Then
-                                If (destHor = 5 Or destHor = 7) And castleW = True Then : Castling = True : End If
-                            End If
-                        End If
-                        If colour = True Then
-                            If currVer = 9 And destVer = 9 Then
-                                If (destHor = 5 Or destHor = 7) And castleW = True Then : Castling = True : End If
-                            End If
+                    If colour = True Then
+                        If currVer = 9 And destVer = 9 Then
+                            If (destHor = 5 Or destHor = 7) And castleW = True Then : Castling = True : End If
                         End If
                     End If
                 End If
@@ -247,164 +197,27 @@ Module Module1
                     moveable = False
                 End If
             Case "B ", "b "
-                If currHor < destHor And currVer < destVer Then
-                    For i = 1 To (destHor - currHor)
-                        If board(currVer + i, currHor + i) IsNot ".." Then
-                            moveable = False
-                            Exit For
-                        Else
-                            moveable = True
-                        End If
-                    Next
-                    If board(currVer + 1, currVer + 1) Is board(destVer, destHor) Then
-                        moveable = True
-                    End If
-                ElseIf currHor < destHor And currVer > destVer Then
-                    For i = 1 To (destHor - currHor)
-                        If board(currVer - i, currHor + i) IsNot ".." Then
-                            moveable = False
-                            Exit For
-                        Else
-                            moveable = True
-                        End If
-                    Next
-                    If board(currVer - 1, currVer + 1) Is board(destVer, destHor) Then
-                        moveable = True
-                    End If
-                ElseIf currHor > destHor And currVer < destVer Then
-                    For i = 1 To (currHor - destHor)
-                        If board(currVer + i, currHor - i) IsNot ".." Then
-                            moveable = False
-                            Exit For
-                        Else
-                            moveable = True
-                        End If
-                    Next
-                    If board(currVer + 1, currVer - 1) Is board(destVer, destHor) Then
-                        moveable = True
-                    End If
-                ElseIf currHor > destHor And currVer > destVer Then
-                    For i = 1 To (currHor - destHor)
-                        If board(currVer - i, currHor - i) IsNot ".." Then
-                            moveable = False
-                            Exit For
-                        Else
-                            moveable = True
-                        End If
-                    Next
-                    If board(currVer - 1, currVer - 1) Is board(destVer, destHor) Then
-                        moveable = True
-                    End If
-                End If
+                moveable = True
+                For i = 1 To Math.Abs(currVer - destVer) - 1
+                    If destVer > currVer And destHor > currHor Then : If board(currVer + i, currHor + i) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If destVer < currVer And destHor > currHor Then : If board(currVer - i, currHor + i) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If destVer > currVer And destHor < currHor Then : If board(currVer + i, currHor - i) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If destVer < currVer And destHor < currHor Then : If board(currVer - i, currHor - i) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If currVer + i > 9 OrElse currHor + i > 9 OrElse currVer - i < 2 OrElse currHor - i < 2 Then : Exit For : End If
+                Next
             Case "Q ", "q "
-                'Vertical Movement
-                If destHor = currHor And destVer <> currVer Then
-                    'Up
-                    If destVer > currVer Then
-                        For i = currVer + 1 To destVer - 1
-                            If board(i, currHor) IsNot ".." Then
-                                moveable = False
-                                Exit For
-                            Else
-                                moveable = True
-                            End If
-                        Next
-                        If destVer - currVer = 1 Then
-                            moveable = True
-                        End If
-                        'Down
-                    ElseIf destVer < currVer Then
-                        For i = currVer - 1 To destVer + 1
-                            If board(i, currHor) IsNot ".." Then
-                                moveable = False
-                                Exit For
-                            Else
-                                moveable = True
-                            End If
-                        Next
-                        If currVer - destVer = 1 Then
-                            moveable = True
-                        End If
-                    End If
-                    'Horizontal Movement
-                ElseIf destVer = currVer And destHor <> currHor Then
-                    'Right
-                    If destHor > currHor Then
-                        For i = currHor + 1 To destHor - 1
-                            If board(currVer, i) IsNot ".." Then
-                                moveable = False
-                                Exit For
-                            Else
-                                moveable = True
-                            End If
-                        Next
-                        If destHor - currHor = 1 Then
-                            moveable = True
-                        End If
-                    End If
-                    'Left
-                ElseIf destHor < currHor Then
-                    For i = currHor - 1 To destHor + 1
-                        If board(currVer, i) IsNot ".." Then
-                            moveable = False
-                            Exit For
-                        Else
-                            moveable = True
-                        End If
-                    Next
-                    If currHor - destHor = 1 Then
-                        moveable = True
-                    End If
-                End If
-                If currHor < destHor And currVer < destVer Then
-                    For i = 1 To (destHor - currHor)
-                        If board(currVer + i, currHor + i) IsNot ".." Then
-                            moveable = False
-                            Exit For
-                        Else
-                            moveable = True
-                        End If
-                    Next
-                    If board(currVer + 1, currVer + 1) Is board(destVer, destHor) Then
-                        moveable = True
-                    End If
-                ElseIf currHor < destHor And currVer > destVer Then
-                    For i = 1 To (destHor - currHor)
-                        If board(currVer - i, currHor + i) IsNot ".." Then
-                            moveable = False
-                            Exit For
-                        Else
-                            moveable = True
-                        End If
-                    Next
-                    If board(currVer - 1, currVer + 1) Is board(destVer, destHor) Then
-                        moveable = True
-                    End If
-                ElseIf currHor > destHor And currVer < destVer Then
-                    For i = 1 To (currHor - destHor)
-                        If board(currVer + i, currHor - i) IsNot ".." Then
-                            moveable = False
-                            Exit For
-                        Else
-                            moveable = True
-                        End If
-                    Next
-                    If board(currVer + 1, currVer - 1) Is board(destVer, destHor) Then
-                        moveable = True
-                    End If
-                ElseIf currHor > destHor And currVer > destVer Then
-                    For i = 1 To (currHor - destHor)
-                        If board(currVer - i, currHor - i) IsNot ".." Then
-                            moveable = False
-                            Exit For
-                        Else
-                            moveable = True
-                        End If
-                    Next
-                    If board(currVer - 1, currVer - 1) Is board(destVer, destHor) Then
-                        moveable = True
-                    End If
-                End If
+                moveable = True
+                For i = 1 To Math.Abs(currVer - destVer) - 1
+                    If destVer > currVer And destHor = currHor Then : If board(currVer + i, currHor) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If destVer < currVer And destHor = currHor Then : If board(currVer - i, currHor) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If destVer = currVer And destHor > currHor Then : If board(currVer, currHor + i) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If destVer = currVer And destHor < currHor Then : If board(currVer, currHor - i) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If destVer > currVer And destHor > currHor Then : If board(currVer + i, currHor + i) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If destVer < currVer And destHor > currHor Then : If board(currVer - i, currHor + i) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If destVer > currVer And destHor < currHor Then : If board(currVer + i, currHor - i) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If destVer < currVer And destHor < currHor Then : If board(currVer - i, currHor - i) IsNot ".." Then : moveable = False : Exit For : End If : End If
+                    If currVer + i > 9 OrElse currHor + i > 9 OrElse currVer - i < 2 OrElse currHor - i < 2 Then : Exit For : End If
+                Next
             Case "K ", "k "
                 'Vertical Movement
                 If destHor = currHor And destVer <> currVer Then
@@ -526,62 +339,111 @@ Module Module1
 
 
     Sub Check()
-        ' What to check:
+        Dim checkUp, checkDown, checkRight, checkLeft, checkUpRight, CheckUpLeft, checkDownRight, checkDownLeft As Boolean
+        checkUp = True : checkDown = True : checkRight = True : checkLeft = True : checkUpRight = True : CheckUpLeft = True : checkDownRight = True : checkDownLeft = True
+
+        Dim x, y As Integer
+        y = 9 : x = 2
+        ' Check every coordinate on the board:
         ' pawns (check diagonally)
         ' knights (check L positions)
         ' rooks (use for statement)
         ' bishops (use for statement)
         ' queen (use rooks & bishops for statements)
-        ' check all 9 tiles around the king (for checkmate)
+        ' check all 8 tiles around the king (for checkmate)
         ' If all of these are true
-        '     Prevent player from not moving king
+        '     Prevent player from not moving out of check
         '     Prevent player from moving into check
-        ' If all 8 tiles around king are moves into check
+        ' If all 8 tiles around king are moves into check AND no piece can move into any of those places
         '     checkmate!
-        If colour = False Then
-            Select Case board(destVer, destHor)
-                Case "P "
-                    If board(destVer + 1, destHor + 1) Is "k " OrElse board(destVer + 1, destHor - 1) Is "k " Then
-                        inCheck = True
-                    End If
-                Case "R "
-                    For i = destVer To 8
-                        If board(i, destHor) Is "k " Then
+        inCheck = False
+        While y <> 1 And x <> 2 'Until they reach the end of the board
+            If colour = True Then
+                Select Case board(y, x)
+                    Case "P "
+                        If board(destVer + 1, destHor + 1) Is "k " OrElse board(destVer + 1, destHor - 1) Is "k " Then : inCheck = True : End If
+                    Case "N "
+                        If board(y + 1, x - 2) Is "k " OrElse board(y + 2, x - 1) Is "k " OrElse board(y + 2, x + 1) Is "k " OrElse board(y + 1, x + 2) Is "k " OrElse board(y - 1, x + 2) Is "k " OrElse board(y - 2, x + 1) Is "k " OrElse board(y - 2, x - 1) Is "k " OrElse board(y - 1, x - 2) Is "k " Then
                             inCheck = True
                         End If
-                    Next
-                    For i = destVer To 1
-                        If board(i, destHor) Is "k " Then
+                    Case "B "
+                        checkUpRight = True : CheckUpLeft = True : checkDownRight = True : checkDownLeft = True
+                        For i = 1 To 9
+                            If checkUpRight = True Then : If board(y + i, x + i) IsNot ".." Then : If board(y + i, x + i) Is "k " Then : inCheck = True : Exit For : Else : checkUpRight = False : End If : End If : End If
+                            If CheckUpLeft = True Then : If board(y + i, x - i) IsNot ".." Then : If board(y + i, x - i) Is "k " Then : inCheck = True : Exit For : Else : CheckUpLeft = False : End If : End If : End If
+                            If checkDownRight = True Then : If board(y - i, x + i) IsNot ".." Then : If board(y - i, x + i) Is "k " Then : inCheck = True : Exit For : Else : checkDownRight = False : End If : End If : End If
+                            If checkDownLeft = True Then : If board(y - i, x - i) IsNot ".." Then : If board(y - i, x - i) Is "k " Then : inCheck = True : Exit For : Else : checkDownLeft = False : End If : End If : End If
+                            If destVer + i > 9 OrElse destHor + i > 9 OrElse destVer - i < 2 OrElse destHor - i < 2 Then : Exit For : End If
+                        Next
+                    Case "R "
+                        checkUp = True : checkDown = True : checkRight = True : checkLeft = True
+                        For i = 1 To 9
+                            If checkUp = True Then : If board(y + i, x) IsNot ".." Then : If board(y + i, x) Is "k " Then : inCheck = True : Exit For : Else : checkUp = False : End If : End If : End If
+                            If checkDown = True Then : If board(y - i, x) IsNot ".." Then : If board(y - i, x) Is "k " Then : inCheck = True : Exit For : Else : checkDown = False : End If : End If : End If
+                            If checkRight = True Then : If board(y, x + i) IsNot ".." Then : If board(y, x + i) Is "k " Then : inCheck = True : Exit For : Else : checkLeft = False : End If : End If : End If
+                            If checkLeft = True Then : If board(y, x - i) IsNot ".." Then : If board(y, x - i) Is "k " Then : inCheck = True : Exit For : Else : checkRight = False : End If : End If : End If
+                            If destVer + i > 9 OrElse destHor + i > 9 OrElse destVer - i < 2 OrElse destHor - i < 2 Then : Exit For : End If
+                        Next
+                    Case "Q "
+                        checkUp = True : checkDown = True : checkRight = True : checkLeft = True : checkUpRight = True : CheckUpLeft = True : checkDownRight = True : checkDownLeft = True
+                        For i = 1 To 9
+                            If checkUpRight = True Then : If board(y + i, x + i) IsNot ".." Then : If board(y + i, x + i) Is "k " Then : inCheck = True : Exit For : Else : checkUpRight = False : End If : End If : End If
+                            If CheckUpLeft = True Then : If board(y + i, x - i) IsNot ".." Then : If board(y + i, x - i) Is "k " Then : inCheck = True : Exit For : Else : CheckUpLeft = False : End If : End If : End If
+                            If checkDownRight = True Then : If board(y - i, x + i) IsNot ".." Then : If board(y - i, x + i) Is "k " Then : inCheck = True : Exit For : Else : checkDownRight = False : End If : End If : End If
+                            If checkDownLeft = True Then : If board(y - i, x - i) IsNot ".." Then : If board(y - i, x - i) Is "k " Then : inCheck = True : Exit For : Else : checkDownLeft = False : End If : End If : End If
+                            If checkUp = True Then : If board(y + i, x) IsNot ".." Then : If board(y + i, x) Is "k " Then : inCheck = True : Exit For : Else : checkUp = False : End If : End If : End If
+                            If checkDown = True Then : If board(y - i, x) IsNot ".." Then : If board(y - i, x) Is "k " Then : inCheck = True : Exit For : Else : checkDown = False : End If : End If : End If
+                            If checkRight = True Then : If board(y, x + i) IsNot ".." Then : If board(y, x + i) Is "k " Then : inCheck = True : Exit For : Else : checkLeft = False : End If : End If : End If
+                            If checkLeft = True Then : If board(y, x - i) IsNot ".." Then : If board(y, x - i) Is "k " Then : inCheck = True : Exit For : Else : checkRight = False : End If : End If : End If
+                            If destVer + i > 9 OrElse destHor + i > 9 OrElse destVer - i < 2 OrElse destHor - i < 2 Then : Exit For : End If
+                        Next
+                End Select
+            Else
+                Select Case board(y, x)
+                    Case "p "
+                        If board(y + 1, x + 1) Is "K " OrElse board(y + 1, x - 1) Is "K " Then : inCheck = True : End If
+                    Case "n "
+                        If board(y + 1, x - 2) Is "K " OrElse board(y + 2, x - 1) Is "K " OrElse board(y + 2, x + 1) Is "K " OrElse board(y + 1, x + 2) Is "K " OrElse board(y - 1, x + 2) Is "K " OrElse board(y - 2, x + 1) Is "K " OrElse board(y - 2, x - 1) Is "K " OrElse board(y - 1, x - 2) Is "K " Then
                             inCheck = True
                         End If
-                    Next
-                    For i = destHor To 8
-                        If board(destVer, i) Is "k " Then
-                            inCheck = True
-                        End If
-                    Next
-                    For i = destHor To 1
-                        If board(destVer, i) Is "k " Then
-                            inCheck = True
-                        End If
-                    Next
-                Case "N "
-                    If board(destVer + 1, destHor - 2) Is "k " OrElse board(destVer + 2, destHor - 1) Is "k " OrElse board(destVer + 2, destHor + 1) Is "k " OrElse board(destVer + 1, destHor + 2) Is "k " OrElse board(destVer - 1, destHor + 2) Is "k " OrElse board(destVer - 2, destHor + 1) Is "k " OrElse board(destVer - 2, destHor - 1) Is "k " OrElse board(destVer - 1, destHor - 2) Is "k " Then
-                        inCheck = True
-                    End If
-                Case "B "
-                    For i = 1 To 8 - destHor
-                        If board(destVer + i, destHor + i) Is "k " Then
-                            inCheck = True
-                        End If
-                    Next
-                    For i = 1 To destHor
-                        If board(destVer + i, destHor + i) Is "k " Then
-                            inCheck = True
-                        End If
-                    Next
-            End Select
-        End If
+                    Case "b "
+                        checkUpRight = True : CheckUpLeft = True : checkDownRight = True : checkDownLeft = True
+                        For i = 1 To 9
+                            If checkUpRight = True Then : If board(y + i, x + i) IsNot ".." Then : If board(y + i, x + i) Is "K " Then : inCheck = True : Exit For : Else : checkUpRight = False : End If : End If : End If
+                            If CheckUpLeft = True Then : If board(y + i, x - i) IsNot ".." Then : If board(y + i, x - i) Is "K " Then : inCheck = True : Exit For : Else : CheckUpLeft = False : End If : End If : End If
+                            If checkDownRight = True Then : If board(y - i, x + i) IsNot ".." Then : If board(y - i, x + i) Is "K " Then : inCheck = True : Exit For : Else : checkDownRight = False : End If : End If : End If
+                            If checkDownLeft = True Then : If board(y - i, x - i) IsNot ".." Then : If board(y - i, x - i) Is "K " Then : inCheck = True : Exit For : Else : checkDownLeft = False : End If : End If : End If
+                            If destVer + i > 9 OrElse destHor + i > 9 OrElse destVer - i < 2 OrElse destHor - i < 2 Then : Exit For : End If
+                        Next
+                    Case "r "
+                        checkUp = True : checkDown = True : checkRight = True : checkLeft = True
+                        For i = 1 To 9
+                            If checkUp = True Then : If board(y + i, x) IsNot ".." Then : If board(y + i, x) Is "K " Then : inCheck = True : Exit For : Else : checkUp = False : End If : End If : End If
+                            If checkDown = True Then : If board(y - i, x) IsNot ".." Then : If board(y - i, x) Is "K " Then : inCheck = True : Exit For : Else : checkDown = False : End If : End If : End If
+                            If checkRight = True Then : If board(y, x + i) IsNot ".." Then : If board(y, x + i) Is "K " Then : inCheck = True : Exit For : Else : checkLeft = False : End If : End If : End If
+                            If checkLeft = True Then : If board(y, x - i) IsNot ".." Then : If board(y, x - i) Is "K " Then : inCheck = True : Exit For : Else : checkRight = False : End If : End If : End If
+                            If destVer + i > 9 OrElse destHor + i > 9 OrElse destVer - i < 2 OrElse destHor - i < 2 Then : Exit For : End If
+                        Next
+                    Case "q "
+                        checkUp = True : checkDown = True : checkRight = True : checkLeft = True : checkUpRight = True : CheckUpLeft = True : checkDownRight = True : checkDownLeft = True
+                        For i = 1 To 9
+                            If checkUpRight = True Then : If board(y + i, x + i) IsNot ".." Then : If board(y + i, x + i) Is "K " Then : inCheck = True : Exit For : Else : checkUpRight = False : End If : End If : End If
+                            If CheckUpLeft = True Then : If board(y + i, x - i) IsNot ".." Then : If board(y + i, x - i) Is "K " Then : inCheck = True : Exit For : Else : CheckUpLeft = False : End If : End If : End If
+                            If checkDownRight = True Then : If board(y - i, x + i) IsNot ".." Then : If board(y - i, x + i) Is "K " Then : inCheck = True : Exit For : Else : checkDownRight = False : End If : End If : End If
+                            If checkDownLeft = True Then : If board(y - i, x - i) IsNot ".." Then : If board(y - i, x - i) Is "K " Then : inCheck = True : Exit For : Else : checkDownLeft = False : End If : End If : End If
+                            If checkUp = True Then : If board(y + i, x) IsNot ".." Then : If board(y + i, x) Is "K " Then : inCheck = True : Exit For : Else : checkUp = False : End If : End If : End If
+                            If checkDown = True Then : If board(y - i, x) IsNot ".." Then : If board(y - i, x) Is "K " Then : inCheck = True : Exit For : Else : checkDown = False : End If : End If : End If
+                            If checkRight = True Then : If board(y, x + i) IsNot ".." Then : If board(y, x + i) Is "K " Then : inCheck = True : Exit For : Else : checkLeft = False : End If : End If : End If
+                            If checkLeft = True Then : If board(y, x - i) IsNot ".." Then : If board(y, x - i) Is "K " Then : inCheck = True : Exit For : Else : checkRight = False : End If : End If : End If
+                            If destVer + i > 9 OrElse destHor + i > 9 OrElse destVer - i < 2 OrElse destHor - i < 2 Then : Exit For : End If
+                        Next
+                End Select
+            End If
+            If x = 9 Then : y -= 1 : x = 1 : End If
+            x += 1
+        End While
+        If inCheck = True Then : Console.WriteLine("In check!") : End If
+
     End Sub
 
     Sub FEN_load(ByRef Fstr As String)
@@ -651,6 +513,10 @@ Module Module1
         End While
         If turn = "Black" Then : FENstr += " b"
         Else : FENstr += " w" : End If
+        If castleW = True Then : FENstr += " KQ"
+        Else : FENstr += " --" : End If
+        If castleB = True Then : FENstr += "kq "
+        Else : FENstr += "-- " : End If
         Console.WriteLine(FENstr)
         Console.ReadKey()
     End Sub
