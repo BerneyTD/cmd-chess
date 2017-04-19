@@ -1,5 +1,5 @@
 Module Module1
-    Dim board(11, 11), answer As String
+    Dim board(11, 11), tempBoard(11, 11), answer As String
     Dim currHor, currVer As Integer
     Dim destHor, destVer As Integer
     Dim turn As String
@@ -12,6 +12,7 @@ Module Module1
     Dim gamemode As String
     Dim blackNextIndex, whiteNextIndex As Integer
     Dim AImove As String
+    Dim minimax_total As Integer
 
     'When it works, do FEN thing (ask Dungles)
 
@@ -151,8 +152,9 @@ Module Module1
                     End If
                 Else
                     findLegalMoves()
-                    Randomize()
-                    AImove = blackLegalMoves(Int(Rnd() * blackNextIndex - 1) + 1)
+                    Tree()
+                    'Randomize()
+                    'AImove = blackLegalMoves(Int(Rnd() * blackNextIndex - 1) + 1)
                     ProcessAI()
                 End If
             End While
@@ -200,8 +202,58 @@ Module Module1
         moveY = Val(AImove.Chars(4))
         board(moveY, moveX) = board(pieceY, pieceX)
         board(pieceY, pieceX) = ".."
+        Console.WriteLine(AImove)
         colour = False
         turn = "White"
+    End Sub
+
+    Sub ProcessAITree(ByVal input As String)
+        Dim pieceX, pieceY, moveX, moveY As Integer
+        pieceX = Val(input.Chars(0))
+        pieceY = Val(input.Chars(1))
+        moveX = Val(input.Chars(3))
+        moveY = Val(input.Chars(4))
+        tempBoard(moveY, moveX) = tempBoard(pieceY, pieceX)
+        tempBoard(pieceY, pieceX) = ".."
+    End Sub
+
+    Sub points()
+        Dim x, y As Integer
+        minimax_total = 0
+        While y <> 1 And x <> 2
+            Select Case tempBoard(y, x)
+                Case "P " : minimax_total += 1
+                Case "p " : minimax_total -= 1
+                Case "N ", "B " : minimax_total += 3
+                Case "n ", "b " : minimax_total -= 3
+                Case "R " : minimax_total += 5
+                Case "r " : minimax_total -= 5
+                Case "Q " : minimax_total += 9
+                Case "q " : minimax_total -= 9
+            End Select
+            If x = 9 Then : y -= 1 : x = 1 : End If
+            x += 1
+        End While
+    End Sub
+
+    Sub Tree()
+        tempBoard = board
+        Dim minimax_temp As Integer
+        Dim blackLegalMovesTemp(100), bestMove As String
+        Dim possibleMoves As Integer = blackNextIndex - 1
+        blackLegalMovesTemp = blackLegalMoves
+        bestMove = blackLegalMoves(0)
+        For i = 0 To possibleMoves
+            tempBoard = board
+            AImove = blackLegalMovesTemp(i)
+            ProcessAITree(AImove)
+            points()
+            If minimax_total < minimax_temp Then
+                minimax_temp = minimax_total
+                bestMove = blackLegalMovesTemp(i)
+            End If
+        Next
+        AImove = bestMove
     End Sub
 
     Sub move()
