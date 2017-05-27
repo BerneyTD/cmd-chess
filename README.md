@@ -7,5 +7,5 @@ CMD CHESS IS A WORK IN PROGRESS
 		Check/ Checkmate systems
 		Scaleable chess board
 		Board Flipping
-		AI to play against
+		(good) AI to play against
 		AND MOREEEEEEEEEEEEE
