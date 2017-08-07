@@ -1,5 +1,7 @@
 Module Module1
     Dim board(11, 11), tempBoard(11, 11), answer As String
+    Dim pawnTable(7, 7), knightTable(7, 7), bishopTable(7, 7), rookTable(7, 7) As Integer
+    Dim queenTable(7, 7), kingTable(7, 7), kingEndGameTable(7, 7) As Integer
     Dim currHor, currVer As Integer
     Dim destHor, destVer As Integer
     Dim turn As String
@@ -13,10 +15,71 @@ Module Module1
     Dim blackNextIndex, whiteNextIndex As Integer
     Dim AImove As String
     Dim minimax_total As Integer
+    Dim fen As String
+    Dim blackKingX, blackKingY, whiteKingX, whiteKingY As Integer
 
-    'When it works, do FEN thing (ask Dungles)
+
+
+
+
+
+
 
     Sub Main()
+
+
+        pawnTable = New Integer(7, 7) {
+        {0, 0, 0, 0, 0, 0, 0, 0},
+        {50, 50, 50, 50, 50, 50, 50, 50},
+        {10, 10, 20, 30, 30, 20, 10, 10},
+        {5, 5, 10, 27, 27, 10, 5, 5},
+        {0, 0, 0, 25, 25, 0, 0, 0},
+        {5, -5, -10, 0, 0, -10, -5, 5},
+        {5, 10, 10, -25, -25, 10, 10, 5},
+        {0, 0, 0, 0, 0, 0, 0, 0}}
+
+        knightTable = New Integer(7, 7) {
+            {-50, -40, -30, -30, -30, -30, -40, -50},
+            {-40, -20, 0, 0, 0, 0, -20, 40},
+            {-30, 0, 10, 15, 15, 10, 0, -30},
+            {-30, 5, 15, 20, 20, 15, 5, -30},
+            {-30, 0, 15, 20, 20, 15, 5, -30},
+            {-30, 5, 10, 15, 15, 10, 5, -30},
+            {-40, -20, 0, 5, 5, 0, -20, -40},
+            {-50, -40, -20, -30, -30, -20, -40, -50}}
+
+        bishopTable = New Integer(7, 7) {
+        {-20, -10, -10, -10, -10, -10, -10, -20},
+        {-10, 0, 0, 0, 0, 0, 0, -10},
+        {-10, 0, 5, 10, 10, 5, 0, -10},
+        {-10, 5, 5, 10, 10, 5, 5, -10},
+        {-10, 0, 10, 10, 10, 10, 0, -10},
+        {-10, 10, 10, 10, 10, 10, 10, -10},
+        {-10, 5, 0, 0, 0, 0, 5, -10},
+        {-20, -10, -40, -10, -10, -40, -10, -20}}
+
+        kingTable = New Integer(7, 7) {
+            {-30, -40, -40, -50, -50, -40, -40, -30},
+            {-30, -40, -40, -50, -50, -40, -40, -30},
+            {-30, -40, -40, -50, -50, -40, -40, -30},
+            {-30, -40, -40, -50, -50, -40, -40, -30},
+            {-20, -30, -30, -40, -40, -30, -30, -20},
+            {-10, -20, -20, -20, -20, -20, -20, -10},
+            {20, 20, 0, 0, 0, 0, 20, 20},
+            {20, 30, 10, 0, 0, 10, 30, 20}}
+
+        kingEndGameTable = New Integer(7, 7) {
+            {-50, -40, -30, -20, -20, -30, -40, -50},
+            {-30, -20, -10, 0, 0, -10, -20, -30},
+            {-30, -10, 20, 30, 30, 20, -10, -30},
+            {-30, -10, 30, 40, 40, 30, -10, -30},
+            {-30, -10, 30, 40, 40, 30, -10, -30},
+            {-30, -10, 30, 40, 40, 30, -10, -30},
+            {-30, -30, 0, 0, 0, 0, -30, -30},
+            {-50, -30, -30, -30, -30, -30, -30, -50}}
+
+
+
         castleW = True
         castleB = True
         Console.WriteLine("How to play:")
@@ -74,7 +137,8 @@ Module Module1
                         FEN_load(Console.ReadLine())
                     End If
                     If answer.ToLower() = "save" Then
-                        FEN_save()
+                        fen = FEN_save()
+                        Console.WriteLine(fen)
                     End If
                 Else
                     processAnswer()
@@ -153,8 +217,6 @@ Module Module1
                 Else
                     findLegalMoves()
                     Tree()
-                    'Randomize()
-                    'AImove = blackLegalMoves(Int(Rnd() * blackNextIndex - 1) + 1)
                     ProcessAI()
                 End If
             End While
@@ -185,12 +247,12 @@ Module Module1
         currHor = Asc(currHorStr) - 95
         destHor = Asc(destHorStr) - 95
 
-        Console.WriteLine(currHor & "," & currVer & " -> " & destHor & "," & destVer)
+        'Console.WriteLine(currHor & "," & currVer & " -> " & destHor & "," & destVer)
 
         If currHor > 9 OrElse currHor < 2 OrElse currVer > 9 OrElse currVer < 2 OrElse destHor > 9 OrElse destHor < 2 OrElse destVer > 9 OrElse destVer < 2 Then
             Console.WriteLine("Invalid coordinate/input")
         End If
-        Console.WriteLine(board(currVer, currHor))
+        'Console.WriteLine(board(currVer, currHor))
 
     End Sub
 
@@ -213,47 +275,106 @@ Module Module1
         pieceY = Val(input.Chars(1))
         moveX = Val(input.Chars(3))
         moveY = Val(input.Chars(4))
-        tempBoard(moveY, moveX) = tempBoard(pieceY, pieceX)
-        tempBoard(pieceY, pieceX) = ".."
+        board(moveY, moveX) = board(pieceY, pieceX)
+        board(pieceY, pieceX) = ".."
     End Sub
 
     Sub points()
         Dim x, y As Integer
+        x = 2
+        y = 9
         minimax_total = 0
-        While y <> 1 And x <> 2
-            Select Case tempBoard(y, x)
-                Case "P " : minimax_total += 1
-                Case "p " : minimax_total -= 1
-                Case "N ", "B " : minimax_total += 3
-                Case "n ", "b " : minimax_total -= 3
-                Case "R " : minimax_total += 5
-                Case "r " : minimax_total -= 5
-                Case "Q " : minimax_total += 9
-                Case "q " : minimax_total -= 9
+        While y > 1
+            Select Case board(y, x)
+                Case "P " : minimax_total += pawnTable(y - 2, x - 2) + 200
+                Case "p " : minimax_total -= (pawnTable(7 - (y - 2), 7 - (x - 2)) + 200)
+                Case "N " : minimax_total += knightTable(y - 2, x - 2) + 500
+                Case "n " : minimax_total -= (knightTable(7 - (y - 2), 7 - (x - 2)) + 500)
+                Case "B " : minimax_total += bishopTable(y - 2, x - 2) + 500
+                Case "b " : minimax_total -= (bishopTable(7 - (y - 2), 7 - (x - 2)) + 500)
+                Case "R " : minimax_total += rookTable(y - 2, x - 2) + 800
+                Case "r " : minimax_total -= (rookTable(7 - (y - 2), 7 - (x - 2)) + 800)
+                Case "Q " : minimax_total += 1300
+                Case "q " : minimax_total -= 1300
             End Select
             If x = 9 Then : y -= 1 : x = 1 : End If
             x += 1
         End While
+        'Console.WriteLine(minimax_total)
     End Sub
 
     Sub Tree()
-        tempBoard = board
-        Dim minimax_temp As Integer
-        Dim blackLegalMovesTemp(100), bestMove As String
-        Dim possibleMoves As Integer = blackNextIndex - 1
-        blackLegalMovesTemp = blackLegalMoves
-        bestMove = blackLegalMoves(0)
-        For i = 0 To possibleMoves
-            tempBoard = board
-            AImove = blackLegalMovesTemp(i)
-            ProcessAITree(AImove)
-            points()
-            If minimax_total < minimax_temp Then
-                minimax_temp = minimax_total
-                bestMove = blackLegalMovesTemp(i)
+        Dim initBoard As String
+        Dim move1, move2, move3 As String
+        Dim board2, board3 As String
+        Dim blackLegalMovesTemp(100) As String
+        Dim possible1, possible2, possible3, dangerPossible As Integer
+        Dim minimax_temp As Integer = 9999
+        Dim hasChanged As Boolean = False
+        Dim isDangerous As Boolean
+        Dim dangerousMoves(100) As String
+        Dim endTotal, endTotalBest As Integer
+        endTotal = 0
+        endTotalBest = 0
+        For i = 0 To 100
+            blackLegalMovesTemp(i) = blackLegalMoves(i)
+        Next
+        dangerPossible = 0
+        possible1 = blackNextIndex - 1
+        initBoard = FEN_save()
+        AImove = blackLegalMovesTemp(0)
+        'For i = 0 To possible1
+        'Console.WriteLine(blackLegalMovesTemp(i))
+        'Next
+        'Console.WriteLine()
+        For i = 0 To possible1
+            endTotal = 0
+            isDangerous = False
+            FEN_load(initBoard)                   '   load the initial board state
+            ProcessAITree(blackLegalMovesTemp(i)) '   process the selected move
+            move1 = blackLegalMovesTemp(i)        '   set move1 to the selected move (for testing)
+            findLegalMoves()                      '   find all legal moves from the selected move
+            possible2 = whiteNextIndex - 1        '   the number of possible returns tothe selected move
+            board2 = FEN_save()                   '   save the board's state after the selected move is played
+            For j = 0 To possible2
+                FEN_load(board2)
+                findLegalMoves()
+                ProcessAITree(whiteLegalMoves(j)) '   process White's return to move
+                points()
+                move2 = whiteLegalMoves(j)
+                findLegalMoves()
+                possible3 = blackNextIndex - 1
+                board3 = FEN_save()
+                For k = 0 To possible3
+                    FEN_load(board3)
+                    findLegalMoves()
+                    ProcessAITree(blackLegalMoves(k))
+                    points()
+                    endTotal += minimax_total
+                    If minimax_total < minimax_temp Then    '   if the total points is smaller than the current smallest AND isn't a dangerous move
+                        minimax_temp = minimax_total                                '   this total becoems the new smallest
+                        move3 = blackLegalMoves(k)
+                        'Console.WriteLine(minimax_temp)
+                        'Console.WriteLine()
+                        'Console.WriteLine(move1)
+                        'Console.WriteLine(move2)
+                        'Console.WriteLine(move3)
+                        'Console.WriteLine()
+                    End If
+                Next
+            Next
+            If endTotal < endTotalBest Then
+                endTotalBest = endTotal
+                AImove = blackLegalMovesTemp(i) '   set the AI's move to the initial move from the first board state
+                hasChanged = True               '   notify that the AI has found a best case scenario
+                Console.WriteLine(endTotal)
             End If
         Next
-        AImove = bestMove
+        If hasChanged = False Then                          '   if the AI hasn't found a best case scenario
+            Randomize()
+            AImove = blackLegalMovesTemp(Int(Rnd() * possible1) + 1)    '   set the move to a random one of the possible choices
+        End If
+        FEN_load(initBoard)
     End Sub
 
     Sub move()
@@ -377,19 +498,19 @@ Module Module1
                     End If
                 End If
                 If currHor < destHor And currVer < destVer Then
-                    If board(currVer + 1, currVer + 1) Is board(destVer, destHor) Then
+                    If board(currVer + 1, currHor + 1) Is board(destVer, destHor) Then
                         moveable = True
                     End If
                 ElseIf currHor < destHor And currVer > destVer Then
-                    If board(currVer - 1, currVer + 1) Is board(destVer, destHor) Then
+                    If board(currVer - 1, currHor + 1) Is board(destVer, destHor) Then
                         moveable = True
                     End If
                 ElseIf currHor > destHor And currVer < destVer Then
-                    If board(currVer + 1, currVer - 1) Is board(destVer, destHor) Then
+                    If board(currVer + 1, currHor - 1) Is board(destVer, destHor) Then
                         moveable = True
                     End If
                 ElseIf currHor > destHor And currVer > destVer Then
-                    If board(currVer - 1, currVer - 1) Is board(destVer, destHor) Then
+                    If board(currVer - 1, currHor - 1) Is board(destVer, destHor) Then
                         moveable = True
                     End If
                 End If
@@ -594,32 +715,32 @@ Module Module1
                     If board(y - 1, x) Is ".." Then : blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y - 1).Trim()) : blackNextIndex += 1 : End If
                     If board(y - 2, x) Is ".." And y = 8 Then : blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y - 2).Trim()) : blackNextIndex += 1 : End If
                     If board(y - 1, x + 1) IsNot ".." Then
-                            Select Case board(y - 1, x + 1) : Case "P ", "N ", "R ", "B ", "Q "
-                                    blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y - 1).Trim())
-                                    blackNextIndex += 1
-                            End Select
-                        End If
-                        If board(y - 1, x - 1) IsNot ".." Then
-                            Select Case board(y - 1, x - 1) : Case "P ", "N ", "R ", "B ", "Q "
-                                    blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y - 1).Trim())
-                                    blackNextIndex += 1
-                            End Select
-                        End If
+                        Select Case board(y - 1, x + 1) : Case "P ", "N ", "R ", "B ", "Q "
+                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y - 1).Trim())
+                                blackNextIndex += 1
+                        End Select
+                    End If
+                    If board(y - 1, x - 1) IsNot ".." Then
+                        Select Case board(y - 1, x - 1) : Case "P ", "N ", "R ", "B ", "Q "
+                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y - 1).Trim())
+                                blackNextIndex += 1
+                        End Select
+                    End If
                 Case "P "
                     If board(y + 1, x) Is ".." Then : whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y + 1).Trim()) : whiteNextIndex += 1 : End If
                     If board(y + 2, x) Is ".." And y = 3 Then : whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y + 2).Trim()) : whiteNextIndex += 1 : End If
                     If board(y + 1, x + 1) IsNot ".." Then
-                            Select Case board(y + 1, x + 1) : Case "p ", "n ", "r ", "b ", "q "
-                                    whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 1).Trim())
-                                    whiteNextIndex += 1
-                            End Select
-                        End If
-                        If board(y + 1, x - 1) IsNot ".." Then
-                            Select Case board(y + 1, x - 1) : Case "p ", "n ", "r ", "b ", "q "
-                                    whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y + 1).Trim())
-                                    whiteNextIndex += 1
-                            End Select
-                        End If
+                        Select Case board(y + 1, x + 1) : Case "p ", "n ", "r ", "b ", "q "
+                                whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 1).Trim())
+                                whiteNextIndex += 1
+                        End Select
+                    End If
+                    If board(y + 1, x - 1) IsNot ".." Then
+                        Select Case board(y + 1, x - 1) : Case "p ", "n ", "r ", "b ", "q "
+                                whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y + 1).Trim())
+                                whiteNextIndex += 1
+                        End Select
+                    End If
                 Case "N "
                     Select Case board(y + 1, x + 2)
                         Case "..", "p ", "r ", "n ", "b ", "q "
@@ -642,66 +763,66 @@ Module Module1
                             whiteNextIndex += 1
                     End Select
                     Select Case board(y + 2, x + 1)
-                            Case "..", "p ", "r ", "n ", "b ", "q "
-                                whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 2).Trim())
-                                whiteNextIndex += 1
-                        End Select
-                        Select Case board(y + 2, x - 1)
-                            Case "..", "p ", "r ", "n ", "b ", "q "
-                                whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y + 2).Trim())
-                                whiteNextIndex += 1
-                        End Select
-                        Select Case board(y - 2, x + 1)
-                            Case "..", "p ", "r ", "n ", "b ", "q "
-                                whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y - 2).Trim())
-                                whiteNextIndex += 1
-                        End Select
-                        Select Case board(y - 2, x - 1)
-                            Case "..", "p ", "r ", "n ", "b ", "q "
-                                whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y - 2).Trim())
-                                whiteNextIndex += 1
-                        End Select
-                    Case "n "
-                        Select Case board(y + 1, x + 2)
-                            Case "..", "P ", "R ", "N ", "B ", "Q "
-                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 2).Trim() + Str(y + 1).Trim())
-                                blackNextIndex += 1
-                        End Select
-                        Select Case board(y + 1, x - 2)
-                            Case "..", "P ", "R ", "N ", "B ", "Q "
-                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 2).Trim() + Str(y + 1).Trim())
-                                blackNextIndex += 1
-                        End Select
-                        Select Case board(y - 1, x + 2)
-                            Case "..", "P ", "R ", "N ", "B ", "Q "
-                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 2).Trim() + Str(y - 1).Trim())
-                                blackNextIndex += 1
-                        End Select
-                        Select Case board(y - 1, x - 2)
-                            Case "..", "P ", "R ", "N ", "B ", "Q "
-                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 2).Trim() + Str(y - 2).Trim())
-                                blackNextIndex += 1
-                        End Select
-                        Select Case board(y + 2, x + 1)
-                            Case "..", "P ", "R ", "N ", "B ", "Q "
-                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 2).Trim())
-                                blackNextIndex += 1
-                        End Select
-                        Select Case board(y + 2, x - 1)
-                            Case "..", "P ", "R ", "N ", "B ", "Q "
-                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y + 2).Trim())
-                                blackNextIndex += 1
-                        End Select
-                        Select Case board(y - 2, x + 1)
-                            Case "..", "P ", "R ", "N ", "B ", "Q "
-                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y - 2).Trim())
-                                blackNextIndex += 1
-                        End Select
-                        Select Case board(y - 2, x - 1)
-                            Case "..", "P ", "R ", "N ", "B ", "Q "
-                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y - 2).Trim())
-                                blackNextIndex += 1
-                        End Select
+                        Case "..", "p ", "r ", "n ", "b ", "q "
+                            whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 2).Trim())
+                            whiteNextIndex += 1
+                    End Select
+                    Select Case board(y + 2, x - 1)
+                        Case "..", "p ", "r ", "n ", "b ", "q "
+                            whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y + 2).Trim())
+                            whiteNextIndex += 1
+                    End Select
+                    Select Case board(y - 2, x + 1)
+                        Case "..", "p ", "r ", "n ", "b ", "q "
+                            whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y - 2).Trim())
+                            whiteNextIndex += 1
+                    End Select
+                    Select Case board(y - 2, x - 1)
+                        Case "..", "p ", "r ", "n ", "b ", "q "
+                            whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y - 2).Trim())
+                            whiteNextIndex += 1
+                    End Select
+                Case "n "
+                    Select Case board(y + 1, x + 2)
+                        Case "..", "P ", "R ", "N ", "B ", "Q "
+                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 2).Trim() + Str(y + 1).Trim())
+                            blackNextIndex += 1
+                    End Select
+                    Select Case board(y + 1, x - 2)
+                        Case "..", "P ", "R ", "N ", "B ", "Q "
+                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 2).Trim() + Str(y + 1).Trim())
+                            blackNextIndex += 1
+                    End Select
+                    Select Case board(y - 1, x + 2)
+                        Case "..", "P ", "R ", "N ", "B ", "Q "
+                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 2).Trim() + Str(y - 1).Trim())
+                            blackNextIndex += 1
+                    End Select
+                    Select Case board(y - 1, x - 2)
+                        Case "..", "P ", "R ", "N ", "B ", "Q "
+                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 2).Trim() + Str(y - 1).Trim())
+                            blackNextIndex += 1
+                    End Select
+                    Select Case board(y + 2, x + 1)
+                        Case "..", "P ", "R ", "N ", "B ", "Q "
+                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 2).Trim())
+                            blackNextIndex += 1
+                    End Select
+                    Select Case board(y + 2, x - 1)
+                        Case "..", "P ", "R ", "N ", "B ", "Q "
+                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y + 2).Trim())
+                            blackNextIndex += 1
+                    End Select
+                    Select Case board(y - 2, x + 1)
+                        Case "..", "P ", "R ", "N ", "B ", "Q "
+                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y - 2).Trim())
+                            blackNextIndex += 1
+                    End Select
+                    Select Case board(y - 2, x - 1)
+                        Case "..", "P ", "R ", "N ", "B ", "Q "
+                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y - 2).Trim())
+                            blackNextIndex += 1
+                    End Select
                 Case "r "
                     checkUp = True : checkDown = True : checkLeft = True : checkRight = True
                     For j = 1 To 9
@@ -833,10 +954,10 @@ Module Module1
                 Case "b "
                     checkUpRight = True : CheckUpLeft = True : checkDownRight = True : checkDownLeft = True
                     For j = 1 To 9
-                        If (x - j) < 2 And (y + j) > 9 Then : CheckUpLeft = False : End If
-                        If (x + j) > 9 And (y + j) > 9 Then : checkUpRight = False : End If
-                        If (x - j) < 2 And (y - j) < 2 Then : checkDownLeft = False : End If
-                        If (x + j) > 9 And (y - j) < 2 Then : checkDownRight = False : End If
+                        If (x - j) < 2 Or (y + j) > 9 Then : CheckUpLeft = False : End If
+                        If (x + j) > 9 Or (y + j) > 9 Then : checkUpRight = False : End If
+                        If (x - j) < 2 Or (y - j) < 2 Then : checkDownLeft = False : End If
+                        If (x + j) > 9 Or (y - j) < 2 Then : checkDownRight = False : End If
                         If checkUpRight = True Then
                             If board(y + j, x + j) IsNot ".." Then
                                 Select Case board(y + j, x)
@@ -898,10 +1019,10 @@ Module Module1
                 Case "B "
                     checkUpRight = True : CheckUpLeft = True : checkDownRight = True : checkDownLeft = True
                     For j = 1 To 9
-                        If (x - j) < 2 And (y + j) > 9 Then : CheckUpLeft = False : End If
-                        If (x + j) > 9 And (y + j) > 9 Then : checkUpRight = False : End If
-                        If (x - j) < 2 And (y - j) < 2 Then : checkDownLeft = False : End If
-                        If (x + j) > 9 And (y - j) < 2 Then : checkDownRight = False : End If
+                        If (x - j) < 2 Or (y + j) > 9 Then : CheckUpLeft = False : End If
+                        If (x + j) > 9 Or (y + j) > 9 Then : checkUpRight = False : End If
+                        If (x - j) < 2 Or (y - j) < 2 Then : checkDownLeft = False : End If
+                        If (x + j) > 9 Or (y - j) < 2 Then : checkDownRight = False : End If
                         If checkUpRight = True Then
                             If board(y + j, x + j) IsNot ".." Then
                                 Select Case board(y + j, x)
@@ -994,8 +1115,8 @@ Module Module1
                                         CheckUpLeft = False
                                     Case Else : CheckUpLeft = False
                                 End Select
-                            ElseIf board(y - j, x) Is ".." Then
-                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + j).Trim() + Str(y + j).Trim())
+                            ElseIf board(y + j, x - j) Is ".." Then
+                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - j).Trim() + Str(y + j).Trim())
                                 blackNextIndex += 1
                             End If
                         End If
@@ -1009,7 +1130,7 @@ Module Module1
                                     Case Else : checkDownRight = False
                                 End Select
                             ElseIf board(y - j, x + j) Is ".." Then
-                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + j).Trim() + Str(y + j).Trim())
+                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + j).Trim() + Str(y - j).Trim())
                                 blackNextIndex += 1
                             End If
                         End If
@@ -1023,7 +1144,7 @@ Module Module1
                                     Case Else : checkDownLeft = False
                                 End Select
                             ElseIf board(y - j, x - j) Is ".." Then
-                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + j).Trim() + Str(y + j).Trim())
+                                blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - j).Trim() + Str(y - j).Trim())
                                 blackNextIndex += 1
                             End If
                         End If
@@ -1120,8 +1241,8 @@ Module Module1
                                         CheckUpLeft = False
                                     Case Else : CheckUpLeft = False
                                 End Select
-                            ElseIf board(y - j, x) Is ".." Then
-                                whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + j).Trim() + Str(y + j).Trim())
+                            ElseIf board(y + j, x - j) Is ".." Then
+                                whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - j).Trim() + Str(y + j).Trim())
                                 whiteNextIndex += 1
                             End If
                         End If
@@ -1135,7 +1256,7 @@ Module Module1
                                     Case Else : checkDownRight = False
                                 End Select
                             ElseIf board(y - j, x + j) Is ".." Then
-                                whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + j).Trim() + Str(y + j).Trim())
+                                whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + j).Trim() + Str(y - j).Trim())
                                 whiteNextIndex += 1
                             End If
                         End If
@@ -1149,7 +1270,7 @@ Module Module1
                                     Case Else : checkDownLeft = False
                                 End Select
                             ElseIf board(y - j, x - j) Is ".." Then
-                                whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + j).Trim() + Str(y + j).Trim())
+                                whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - j).Trim() + Str(y - j).Trim())
                                 whiteNextIndex += 1
                             End If
                         End If
@@ -1211,93 +1332,269 @@ Module Module1
                         End If
                     Next
                 Case "k "
-                    Select Case board(y + 1, x)
-                        Case "..", "Q ", "B ", "N ", "R ", "P "
-                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y + 1).Trim())
-                            blackNextIndex += 1
-                    End Select
-                    Select Case board(y + 1, x + 1)
-                        Case "..", "Q ", "B ", "N ", "R ", "P "
-                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 1).Trim())
-                            blackNextIndex += 1
-                    End Select
-                    Select Case board(y, x + 1)
-                        Case "..", "Q ", "B ", "N ", "R ", "P "
-                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y).Trim())
-                            blackNextIndex += 1
-                    End Select
-                    Select Case board(y - 1, x + 1)
-                        Case "..", "Q ", "B ", "N ", "R ", "P "
-                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y - 1).Trim())
-                            blackNextIndex += 1
-                    End Select
-                    Select Case board(y - 1, x)
-                        Case "..", "Q ", "B ", "N ", "R ", "P "
-                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y - 1).Trim())
-                            blackNextIndex += 1
-                    End Select
-                    Select Case board(y - 1, x - 1)
-                        Case "..", "Q ", "B ", "N ", "R ", "P "
-                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y - 1).Trim())
-                            blackNextIndex += 1
-                    End Select
-                    Select Case board(y, x - 1)
-                        Case "..", "Q ", "B ", "N ", "R ", "P "
-                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y).Trim())
-                            blackNextIndex += 1
-                    End Select
-                    Select Case board(y + 1, x - 1)
-                        Case "..", "Q ", "B ", "N ", "R ", "P "
-                            blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y + 1).Trim())
-                            blackNextIndex += 1
-                    End Select
+                    blackKingX = x
+                    blackKingY = y
                 Case "K "
-                    Select Case board(y + 1, x)
-                        Case "..", "q ", "b ", "n ", "r ", "p "
-                            whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y + 1).Trim())
-                            whiteNextIndex += 1
-                    End Select
-                    Select Case board(y + 1, x + 1)
-                        Case "..", "q ", "b ", "n ", "r ", "p "
-                            whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 1).Trim())
-                            whiteNextIndex += 1
-                    End Select
-                    Select Case board(y, x + 1)
-                        Case "..", "q ", "b ", "n ", "r ", "p "
-                            whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y).Trim())
-                            whiteNextIndex += 1
-                    End Select
-                    Select Case board(y - 1, x + 1)
-                        Case "..", "q ", "b ", "n ", "r ", "p "
-                            whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y - 1).Trim())
-                            whiteNextIndex += 1
-                    End Select
-                    Select Case board(y - 1, x)
-                        Case "..", "q ", "b ", "n ", "r ", "p "
-                            whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y - 1).Trim())
-                            whiteNextIndex += 1
-                    End Select
-                    Select Case board(y - 1, x - 1)
-                        Case "..", "q ", "b ", "n ", "r ", "p "
-                            whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y - 1).Trim())
-                            whiteNextIndex += 1
-                    End Select
-                    Select Case board(y, x - 1)
-                        Case "..", "q ", "b ", "n ", "r ", "p "
-                            whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y).Trim())
-                            whiteNextIndex += 1
-                    End Select
-                    Select Case board(y + 1, x - 1)
-                        Case "..", "q ", "b ", "n ", "r ", "p "
-                            whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x - 1).Trim() + Str(y + 1).Trim())
-                            whiteNextIndex += 1
-                    End Select
+                    whiteKingX = x
+                    whiteKingY = y
             End Select
             If x = 9 Then : y -= 1 : x = 1 : End If
             x += 1
         End While
-        'Dim whiteMoves, blackMoves As String
-        'whiteMoves = "" : blackMoves = ""
+        x = whiteKingX
+        y = whiteKingY
+        checkUp = True : checkRight = True : checkDown = True : checkLeft = True
+        checkUpRight = True : CheckUpLeft = True : checkDownRight = True : checkDownLeft = True
+        For i = 0 To blackNextIndex - 1
+            If Str(Str(x) + Str(y + 1)).Trim() = blackLegalMoves(i).Substring(3) Then
+                inCheck = True
+                checkUp = False
+            End If
+            If Str(Str(x + 1) + Str(y + 1)).Trim() = blackLegalMoves(i).Substring(3) Then
+                inCheck = True
+                checkUpRight = False
+            End If
+            If Str(Str(x + 1) + Str(y)).Trim() = blackLegalMoves(i).Substring(3) Then
+                inCheck = True
+                checkRight = False
+            End If
+            If Str(Str(x + 1) + Str(y - 1)).Trim() = blackLegalMoves(i).Substring(3) Then
+                inCheck = True
+                checkDownRight = False
+            End If
+            If Str(Str(x) + Str(y - 1)).Trim() = blackLegalMoves(i).Substring(3) Then
+                inCheck = True
+                checkDown = False
+            End If
+            If Str(Str(x - 1) + Str(y - 1)).Trim() = blackLegalMoves(i).Substring(3) Then
+                inCheck = True
+                checkDownLeft = False
+            End If
+            If Str(Str(x - 1) + Str(y)).Trim() = blackLegalMoves(i).Substring(3) Then
+                inCheck = True
+                checkLeft = False
+            End If
+            If Str(Str(x - 1) + Str(y + 1)).Trim() = blackLegalMoves(i).Substring(3) Then
+                inCheck = True
+                CheckUpLeft = False
+            End If
+        Next
+        If checkUp = True Then
+            x = whiteKingX : y = whiteKingY + 1
+            Select Case board(y + 1, x)
+                Case "p ", "n ", "q ", "r ", "b ", ".."
+                    whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y + 1).Trim())
+                    whiteNextIndex += 1
+                    inCheckmate = False
+                Case "P ", "N ", "Q ", "R ", "B "
+                    inCheckmate = False
+            End Select
+        End If
+        If checkUpRight = True Then
+            x = whiteKingX + 1 : y = whiteKingY + 1
+            Select Case board(y + 1, x + 1)
+                Case "p ", "n ", "q ", "r ", "b ", ".."
+                    whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y + 1).Trim())
+                    whiteNextIndex += 1
+                    inCheckmate = False
+                Case "P ", "N ", "Q ", "R ", "B "
+                    inCheckmate = False
+            End Select
+        End If
+        If checkRight = True Then
+            x = whiteKingX + 1 : y = whiteKingY
+            Select Case board(y, x + 1)
+                Case "p ", "n ", "q ", "r ", "b ", ".."
+                    whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y + 1).Trim())
+                    whiteNextIndex += 1
+                    inCheckmate = False
+                Case "P ", "N ", "Q ", "R ", "B "
+                    inCheckmate = False
+            End Select
+        End If
+        If checkDownRight = True Then
+            x = whiteKingX + 1 : y = whiteKingY - 1
+            Select Case board(y - 1, x + 1)
+                Case "p ", "n ", "q ", "r ", "b ", ".."
+                    whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y + 1).Trim())
+                    whiteNextIndex += 1
+                    inCheckmate = False
+                Case "P ", "N ", "Q ", "R ", "B "
+                    inCheckmate = False
+            End Select
+        End If
+        If checkDown = True Then
+            x = whiteKingX : y = whiteKingY - 1
+            Select Case board(y - 1, x)
+                Case "p ", "n ", "q ", "r ", "b ", ".."
+                    whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y + 1).Trim())
+                    whiteNextIndex += 1
+                    inCheckmate = False
+                Case "P ", "N ", "Q ", "R ", "B "
+                    inCheckmate = False
+            End Select
+        End If
+        If checkDownLeft = True Then
+            x = whiteKingX - 1 : y = whiteKingY - 1
+            Select Case board(y - 1, x - 1)
+                Case "p ", "n ", "q ", "r ", "b ", ".."
+                    whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y + 1).Trim())
+                    whiteNextIndex += 1
+                    inCheckmate = False
+                Case "P ", "N ", "Q ", "R ", "B "
+                    inCheckmate = False
+            End Select
+        End If
+        If checkLeft = True Then
+            x = whiteKingX - 1 : y = whiteKingY
+            Select Case board(y, x - 1)
+                Case "p ", "n ", "q ", "r ", "b ", ".."
+                    whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y + 1).Trim())
+                    whiteNextIndex += 1
+                    inCheckmate = False
+                Case "P ", "N ", "Q ", "R ", "B "
+                    inCheckmate = False
+            End Select
+        End If
+        If CheckUpLeft = True Then
+            x = whiteKingX - 1 : y = whiteKingY + 1
+            Select Case board(y + 1, x - 1)
+                Case "p ", "n ", "q ", "r ", "b ", ".."
+                    whiteLegalMoves(whiteNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x).Trim() + Str(y + 1).Trim())
+                    whiteNextIndex += 1
+                    inCheckmate = False
+                Case "P ", "N ", "Q ", "R ", "B "
+                    inCheckmate = False
+            End Select
+        End If
+        x = blackKingX
+        y = blackKingY
+        checkUp = True : checkRight = True : checkDown = True : checkLeft = True
+        checkUpRight = True : CheckUpLeft = True : checkDownRight = True : checkDownLeft = True
+        For i = 0 To whiteNextIndex - 1
+            If Str(Str(x) + Str(y + 1)).Trim() = whiteLegalMoves(i).Substring(3) Then
+                inCheck = True
+                checkUp = False
+            End If
+            If Str(Str(x + 1) + Str(y + 1)).Trim() = whiteLegalMoves(i).Substring(3) Then
+                inCheck = True
+                checkUpRight = False
+            End If
+            If Str(Str(x + 1) + Str(y)).Trim() = whiteLegalMoves(i).Substring(3) Then
+                inCheck = True
+                checkRight = False
+            End If
+            If Str(Str(x + 1) + Str(y - 1)).Trim() = whiteLegalMoves(i).Substring(3) Then
+                inCheck = True
+                checkDownRight = False
+            End If
+            If Str(Str(x) + Str(y - 1)).Trim() = whiteLegalMoves(i).Substring(3) Then
+                inCheck = True
+                checkDown = False
+            End If
+            If Str(Str(x - 1) + Str(y - 1)).Trim() = whiteLegalMoves(i).Substring(3) Then
+                inCheck = True
+                checkDownLeft = False
+            End If
+            If Str(Str(x - 1) + Str(y)).Trim() = whiteLegalMoves(i).Substring(3) Then
+                inCheck = True
+                checkLeft = False
+            End If
+            If Str(Str(x - 1) + Str(y + 1)).Trim() = whiteLegalMoves(i).Substring(3) Then
+                inCheck = True
+                CheckUpLeft = False
+            End If
+        Next
+        If checkUp = True Then
+            x = blackKingX : y = blackKingY + 1
+            Select Case board(y + 1, x)
+                Case "P ", "N ", "Q ", "R ", "B ", ".."
+                    blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 1).Trim())
+                    blackNextIndex += 1
+                    inCheckmate = False
+                Case "p ", "n ", "q ", "r ", "b "
+                    inCheckmate = False
+            End Select
+        End If
+        If checkUpRight = True Then
+            x = blackKingX + 1 : y = blackKingY + 1
+            Select Case board(y + 1, x + 1)
+                Case "P ", "N ", "Q ", "R ", "B ", ".."
+                    blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 1).Trim())
+                    blackNextIndex += 1
+                    inCheckmate = False
+                Case "p ", "n ", "q ", "r ", "b "
+                    inCheckmate = False
+            End Select
+        End If
+        If checkRight = True Then
+            x = blackKingX + 1 : y = blackKingY
+            Select Case board(y + 1, x + 1)
+                Case "P ", "N ", "Q ", "R ", "B ", ".."
+                    blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 1).Trim())
+                    blackNextIndex += 1
+                    inCheckmate = False
+                Case "p ", "n ", "q ", "r ", "b "
+                    inCheckmate = False
+            End Select
+        End If
+        If checkDownRight = True Then
+            x = blackKingX + 1 : y = blackKingY - 1
+            Select Case board(y - 1, x + 1)
+                Case "P ", "N ", "Q ", "R ", "B ", ".."
+                    blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 1).Trim())
+                    blackNextIndex += 1
+                    inCheckmate = False
+                Case "p ", "n ", "q ", "r ", "b "
+                    inCheckmate = False
+            End Select
+        End If
+        If checkDown = True Then
+            x = blackKingX : y = blackKingY - 1
+            Select Case board(y - 1, x)
+                Case "P ", "N ", "Q ", "R ", "B ", ".."
+                    blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 1).Trim())
+                    blackNextIndex += 1
+                    inCheckmate = False
+                Case "p ", "n ", "q ", "r ", "b "
+                    inCheckmate = False
+            End Select
+        End If
+        If checkDownLeft = True Then
+            x = blackKingX - 1 : y = blackKingY - 1
+            Select Case board(y - 1, x - 1)
+                Case "P ", "N ", "Q ", "R ", "B ", ".."
+                    blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 1).Trim())
+                    blackNextIndex += 1
+                    inCheckmate = False
+                Case "p ", "n ", "q ", "r ", "b "
+                    inCheckmate = False
+            End Select
+        End If
+        If checkLeft = True Then
+            x = blackKingX - 1 : y = blackKingY
+            Select Case board(y + 1, x - 1)
+                Case "P ", "N ", "Q ", "R ", "B ", ".."
+                    blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 1).Trim())
+                    blackNextIndex += 1
+                    inCheckmate = False
+                Case "p ", "n ", "q ", "r ", "b "
+                    inCheckmate = False
+            End Select
+        End If
+        If CheckUpLeft = True Then
+            x = blackKingX - 1 : y = blackKingY + 1
+            Select Case board(y + 1, x - 1)
+                Case "P ", "N ", "Q ", "R ", "B ", ".."
+                    blackLegalMoves(blackNextIndex) = (Str(x).Trim() + Str(y).Trim() + " " + Str(x + 1).Trim() + Str(y + 1).Trim())
+                    blackNextIndex += 1
+                    inCheckmate = False
+                Case "p ", "n ", "q ", "r ", "b "
+                    inCheckmate = False
+            End Select
+        End If
+        Dim whiteMoves, blackMoves As String
+        whiteMoves = "" : blackMoves = ""
         'For i = 0 To 100 : whiteMoves += whiteLegalMoves(i) + " : " : blackMoves += blackLegalMoves(i) + " : " : Next
         'Console.WriteLine(whiteMoves)
         'Console.WriteLine(blackMoves)
@@ -1343,7 +1640,7 @@ Module Module1
         Next
     End Sub
 
-    Sub FEN_save()
+    Function FEN_save()
         Dim FENstr As String = ""
         Dim spaces As Integer = 0
         Dim i As Integer = 9
@@ -1375,7 +1672,9 @@ Module Module1
         Else : FENstr += " --" : End If
         If castleB = True Then : FENstr += "kq "
         Else : FENstr += "-- " : End If
-        Console.WriteLine(FENstr)
-        Console.ReadKey()
-    End Sub
+        If colour = False Or gamemode = "2P" Then
+            Console.WriteLine(FENstr)
+        End If
+        Return FENstr
+    End Function
 End Module
